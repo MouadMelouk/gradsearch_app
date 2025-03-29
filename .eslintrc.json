@@ -1,0 +1,10 @@
+{
+    "root": true,
+    "extends": ["next", "prettier"],
+    "plugins": [],
+    "rules": {
+      // turn off overly opinionated rules
+      "react/jsx-key": "off"
+    }
+  }
+  
