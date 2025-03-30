@@ -1,5 +1,7 @@
 'use client';
 
+import { withRolePageGuard } from '@/lib/withRolePageGuard';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
@@ -26,7 +28,9 @@ type Job = {
   tags?: string[];
 };
 
-export default function ApplyJobPage() {
+export default withRolePageGuard(ApplyJobPage, ['student']);
+
+function ApplyJobPage() {
   const { user, token, refreshUser } = useAuth();
   const router = useRouter();
   const { jobId } = router.query;

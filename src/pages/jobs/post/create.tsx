@@ -9,8 +9,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
+import { withRolePageGuard } from '@/lib/withRolePageGuard';
 
-export default function PostJobPage() {
+export default withRolePageGuard(PostJobPage, ['employer']);
+
+function PostJobPage() {
   const { token, user } = useAuth();
   const router = useRouter();
 

@@ -72,7 +72,7 @@ export default function JobsPage() {
             <CardContent className="pt-4">
               <Button
                 className="w-full"
-                onClick={() => router.push(`/job/apply/${job._id}`)}
+                onClick={() => router.push(`/jobs/apply/${job._id}`)}
               >
                 Apply
               </Button>

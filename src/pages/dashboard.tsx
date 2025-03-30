@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useRouter } from 'next/router';
 import UploadCvModal from '@/components/UploadCvModal';
+import { withRolePageGuard } from '@/lib/withRolePageGuard';
 
 type Role = 'student' | 'employer';
 
@@ -20,7 +21,9 @@ interface AuthUser {
   resumeUrl?: string;
 }
 
-export default function Dashboard() {
+export default withRolePageGuard(Dashboard, ['student', 'employer']);
+
+function Dashboard() {
   const { user, token } = useAuth() as { user: AuthUser | null; token: string | null };
   const router = useRouter();
   const [applications, setApplications] = useState<any[]>([]);
@@ -75,7 +78,7 @@ export default function Dashboard() {
                   <p>Applied on: {new Date(app.appliedAt).toLocaleDateString()}</p>
                   <Button
                     variant="outline"
-                    onClick={() => router.push(`/application/${app._id}`)}
+                    onClick={() => router.push(`/applications/${app._id}`)}
                   >
                     View Application
                   </Button>
@@ -120,7 +123,7 @@ export default function Dashboard() {
         <section className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">Your Posted Jobs</h2>
-            <Button onClick={() => router.push('/job/post/create')}>Post New Job</Button>
+            <Button onClick={() => router.push('/jobs/post/create')}>Post New Job</Button>
           </div>
 
           {applications.length > 0 ? (
@@ -136,7 +139,7 @@ export default function Dashboard() {
                 <CardContent className="text-sm flex justify-between items-center">
                   <p>{job.applicantCount} applicant{job.applicantCount === 1 ? '' : 's'}</p>
                   <div className="space-x-2">
-                    <Button variant="outline" onClick={() => router.push(`/job/${job._id}/applications`)}>
+                    <Button variant="outline" onClick={() => router.push(`/jobs/${job._id}/applications`)}>
                       View Applications
                     </Button>
                     <Button variant="secondary" disabled>Edit</Button>

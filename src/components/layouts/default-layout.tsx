@@ -15,18 +15,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="space-x-4 text-sm">
             {user?.role === 'employer' && (
               <>
-                <Link href="/job/post/create" className="hover:underline">Post Job</Link>
+                <Link href="/jobs/post/create" className="hover:underline">Post Job</Link>
                 <Link href="/dashboard" className="hover:underline">Manage Jobs</Link>
               </>
             )}
             {user?.role === 'student' && (
               <>
                 <Link href="/jobs" className="hover:underline">Jobs</Link>
-                <Link href="/dashboard" className="hover:underline">My Applications</Link>
+                <Link href="/dashboard" className="hover:underline">My Dashboard</Link>
               </>
             )}
             {!user && (
               <>
+                <Link href="/jobs" className="hover:underline">Jobs</Link>
                 <Link href="/login" className="hover:underline">Login</Link>
                 <Link href="/register" className="hover:underline">Register</Link>
               </>

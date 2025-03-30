@@ -14,6 +14,7 @@ export interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
+  isReady: boolean;
   login: (token: string) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -24,10 +25,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('token');
-    if (!stored) return;
+    if (!stored) {
+      setIsReady(true);
+      return;
+    }
 
     setToken(stored);
 
@@ -46,6 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('token');
         setToken(null);
         setUser(null);
+      } finally {
+        setIsReady(true); // ✅ Always set this
       }
     };
 
@@ -55,8 +62,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (newToken: string) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
-    await refreshUser();
+    setIsReady(false); // force guard to wait
+  
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${newToken}` },
+      });
+  
+      if (!res.ok) throw new Error('Failed to fetch user');
+  
+      const data = await res.json();
+      setUser(data.user);
+    } catch (err) {
+      console.error('[login] failed to load user:', err);
+      setUser(null);
+      localStorage.removeItem('token');
+      setToken(null);
+    } finally {
+      setIsReady(true); 
+    }
   };
+  
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -82,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, token, isReady, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

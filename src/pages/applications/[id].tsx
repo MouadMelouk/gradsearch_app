@@ -6,8 +6,11 @@ import { useAuth } from '@/context/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { withRolePageGuard } from '@/lib/withRolePageGuard';
 
-export default function ViewApplicationPage() {
+export default withRolePageGuard(ViewApplicationPage, ['student']);
+
+function ViewApplicationPage() {
   const { token } = useAuth();
   const router = useRouter();
   const { id } = useParams(); // application ID

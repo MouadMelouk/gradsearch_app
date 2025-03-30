@@ -7,8 +7,11 @@ import { useAuth } from '@/context/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { withRolePageGuard } from '@/lib/withRolePageGuard';
 
-export default function ViewApplicationsPage() {
+export default withRolePageGuard(ViewApplicationsPage, ['employer']);
+
+function ViewApplicationsPage() {
   const { token } = useAuth();
   const router = useRouter();
   const { jobId } = useParams();
