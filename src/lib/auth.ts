@@ -1,11 +1,28 @@
+// src/lib/auth.ts
+import type { NextApiRequest } from 'next';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
+type DecodedToken = {
+  id: string;
+  role: string;
+  email: string;
+};
 
-export function verifyToken(token: string) {
+export function getUserFromToken(req: NextApiRequest): DecodedToken {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    throw new Error('Authorization header missing');
+  }
+
+  const [scheme, token] = authHeader.split(' ');
+  if (scheme !== 'Bearer' || !token) {
+    throw new Error('Invalid Authorization format. Use "Bearer <token>".');
+  }
+
   try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch {
-    return null;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    return decoded as DecodedToken;
+  } catch (err) {
+    throw new Error('Invalid or expired token');
   }
 }

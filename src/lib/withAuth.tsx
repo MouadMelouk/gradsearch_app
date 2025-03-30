@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import type { ComponentType, JSX } from 'react';
 
-// ✅ Constrain P to JSX.IntrinsicAttributes so TypeScript is happy
+// constrained P to JSX.IntrinsicAttributes so TS is happy and stops complaining
 export function withAuth<P extends JSX.IntrinsicAttributes>(
   Component: ComponentType<P>
 ) {

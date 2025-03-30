@@ -6,6 +6,8 @@ export interface IApplication extends Document {
   resumeUrl: string;
   coverLetter: string;
   status: 'pending' | 'accepted' | 'rejected';
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const ApplicationSchema = new Schema<IApplication>(

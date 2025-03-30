@@ -13,23 +13,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Only POST allowed' });
   }
 
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, resumeUrl } = req.body;
 
+  // ✅ Validate required fields
   if (!name || !email || !password || !['student', 'employer'].includes(role)) {
     return res.status(400).json({ error: 'Invalid request body' });
   }
 
+  // ✅ No longer enforce resumeUrl at signup time
   const existing = await User.findOne({ email });
   if (existing) return res.status(409).json({ error: 'User already exists' });
 
   const hashed = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hashed, role });
+  const user = await User.create({
+    name,
+    email,
+    password: hashed,
+    role,
+    // Optional: store resumeUrl if provided (e.g. for employers later)
+    resumeUrl: resumeUrl || undefined,
+  });
 
   const token = jwt.sign(
     {
       id: user._id,
       email: user.email,
-      name: user.name, // ✅ add this line
+      name: user.name,
       role: user.role,
     },
     JWT_SECRET,

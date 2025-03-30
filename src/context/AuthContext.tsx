@@ -3,18 +3,20 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import jwt from 'jsonwebtoken';
 
-interface AuthUser {
-    id: string;
-    email: string;
-    name: string;
-    role: 'student' | 'employer';
-  }
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'student' | 'employer';
+  resumeUrl?: string;
+}
 
 interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   login: (token: string) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,22 +27,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const stored = localStorage.getItem('token');
-    if (stored) {
+    if (!stored) return;
+
+    setToken(stored);
+
+    const fetchUserFromDB = async () => {
       try {
-        const decoded = jwt.decode(stored) as AuthUser;
-        setToken(stored);
-        setUser(decoded);
-      } catch {
+        const res = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${stored}` },
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch user');
+
+        const data = await res.json();
+        setUser(data.user);
+      } catch (err) {
+        console.error('[AuthContext] Failed to load user from DB:', err);
         localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
       }
-    }
+    };
+
+    fetchUserFromDB();
   }, []);
 
-  const login = (newToken: string) => {
-    const decoded = jwt.decode(newToken) as AuthUser;
+  const login = async (newToken: string) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
-    setUser(decoded);
+    await refreshUser();
   };
 
   const logout = () => {
@@ -49,8 +64,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    if (!token) return;
+
+    try {
+      const res = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      }
+    } catch (err) {
+      console.error('[refreshUser] failed:', err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
