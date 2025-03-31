@@ -55,49 +55,50 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile Burger */}
           <div className="md:hidden">
-            <button
-              onClick={toggleMenu}
-              className="text-sm p-2 border rounded-md hover:bg-accent"
-              aria-label="Toggle menu"
-            >
-              {menuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
-            </button>
+  <button
+    onClick={toggleMenu}
+    className="text-white p-2 border border-white rounded-md hover:bg-white hover:text-black"
+    aria-label="Toggle menu"
+  >
+    {menuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+  </button>
 
-            {menuOpen && (
-              <div className="absolute right-4 top-16 w-48 bg-background shadow-md border rounded-md p-3 space-y-2 z-50 text-sm">
-                {user?.role === 'employer' && (
-                  <>
-                    <Link href="/jobs/post/create" className="block hover:underline" onClick={closeMenu}>Post Job</Link>
-                    <Link href="/dashboard" className="block hover:underline" onClick={closeMenu}>Manage Jobs</Link>
-                  </>
-                )}
-                {user?.role === 'student' && (
-                  <>
-                    <Link href="/jobs" className="block hover:underline" onClick={closeMenu}>Jobs</Link>
-                    <Link href="/dashboard" className="block hover:underline" onClick={closeMenu}>My Dashboard</Link>
-                  </>
-                )}
-                {!user && (
-                  <>
-                    <Link href="/jobs" className="block hover:underline" onClick={closeMenu}>Jobs</Link>
-                    <Link href="/login" className="block hover:underline" onClick={closeMenu}>Login</Link>
-                    <Link href="/register" className="block hover:underline" onClick={closeMenu}>Register</Link>
-                  </>
-                )}
-                {user && (
-                  <button
-                    onClick={() => {
-                      logout();
-                      closeMenu();
-                    }}
-                    className="block w-full text-left hover:underline"
-                  >
-                    Logout
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+  {menuOpen && (
+    <div className="absolute right-4 top-16 w-48 bg-black text-white shadow-lg border border-white rounded-md p-3 space-y-2 z-50 text-sm">
+      {user?.role === 'employer' && (
+        <>
+          <Link href="/jobs/post/create" className="block hover:underline" onClick={closeMenu}>Post Job</Link>
+          <Link href="/dashboard" className="block hover:underline" onClick={closeMenu}>Manage Jobs</Link>
+        </>
+      )}
+      {user?.role === 'student' && (
+        <>
+          <Link href="/jobs" className="block hover:underline" onClick={closeMenu}>Jobs</Link>
+          <Link href="/dashboard" className="block hover:underline" onClick={closeMenu}>My Dashboard</Link>
+        </>
+      )}
+      {!user && (
+        <>
+          <Link href="/jobs" className="block hover:underline" onClick={closeMenu}>Jobs</Link>
+          <Link href="/login" className="block hover:underline" onClick={closeMenu}>Login</Link>
+          <Link href="/register" className="block hover:underline" onClick={closeMenu}>Register</Link>
+        </>
+      )}
+      {user && (
+        <button
+          onClick={() => {
+            logout();
+            closeMenu();
+          }}
+          className="block w-full text-left hover:underline"
+        >
+          Logout
+        </button>
+      )}
+    </div>
+  )}
+</div>
+
         </nav>
       </header>
 
