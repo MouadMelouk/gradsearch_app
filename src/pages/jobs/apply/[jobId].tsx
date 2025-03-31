@@ -204,3 +204,4 @@ function ApplyJobPage() {
     </main>
   );
 }
+export const getServerSideProps = async () => ({ props: {} });

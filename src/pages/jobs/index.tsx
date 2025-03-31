@@ -83,3 +83,4 @@ export default function JobsPage() {
     </main>
   );
 }
+export const getServerSideProps = async () => ({ props: {} });

@@ -118,3 +118,4 @@ export default function RegisterPage() {
     </main>
   );
 }
+export const getServerSideProps = async () => ({ props: {} });

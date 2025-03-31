@@ -117,3 +117,4 @@ function PostJobPage() {
     </main>
   );
 }
+export const getServerSideProps = async () => ({ props: {} });

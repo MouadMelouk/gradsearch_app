@@ -246,3 +246,4 @@ export default function JobMatchingPage() {
     </main>
   );
 }
+export const getServerSideProps = async () => ({ props: {} });

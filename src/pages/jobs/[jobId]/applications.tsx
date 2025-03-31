@@ -86,3 +86,4 @@ function ViewApplicationsPage() {
     </main>
   );
 }
+export const getServerSideProps = async () => ({ props: {} });

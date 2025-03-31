@@ -1,81 +1,98 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { connectToDatabase } from '@/lib/mongodb';
-import { getUserFromToken } from '@/lib/auth';
-import Application, { IApplication } from '@/models/Application';
-import Job, { IJob } from '@/models/Job';
+'use client';
 
-type ResponseData = {
-  application: IApplication;
-  job: IJob;
-};
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<ResponseData | { message?: string; error?: string }>
-) {
-  await connectToDatabase();
-
-  const user = getUserFromToken(req);
-  const { id } = req.query;
-
-  if (!id || typeof id !== 'string') {
-    return res.status(400).json({ error: 'Invalid application ID' });
-  }
-
-  // Fetch the application
-  const rawApplication = await Application.findById(id);
-  if (!rawApplication) {
-    return res.status(404).json({ error: 'Application not found' });
-  }
-
-  // Only the owning student can read/update/delete their application
-  if (user.role !== 'student' || rawApplication.userId.toString() !== user.id) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
-
-  // ================================
-  // GET — Fetch application and job
-  // ================================
-  if (req.method === 'GET') {
-    const rawJob = await Job.findById(rawApplication.jobId).lean();
-    if (!rawJob) {
-      return res.status(404).json({ error: 'Job not found' });
-    }
-
-    return res.status(200).json({
-      application: rawApplication.toObject() as IApplication,
-      job: rawJob as IJob,
-    });
-  }
-
-  // ================================
-  // PATCH — Update cover letter and/or resume URL
-  // ================================
-  if (req.method === 'PATCH') {
-    const { coverLetter, resumeUrl } = req.body;
-
-    if (!coverLetter && !resumeUrl) {
-      return res.status(400).json({ error: 'Nothing to update' });
-    }
-
-    if (coverLetter) rawApplication.coverLetter = coverLetter;
-    if (resumeUrl) rawApplication.resumeUrl = resumeUrl;
-
-    await rawApplication.save();
-
-    return res.status(200).json({ message: 'Application updated successfully' });
-  }
-
-  // ================================
-  // DELETE — Retract application
-  // ================================
-  if (req.method === 'DELETE') {
-    await rawApplication.deleteOne();
-    return res.status(200).json({ message: 'Application successfully retracted' });
-  }
-
-  // ================================
-  // Unsupported method
-  // ================================
-  return res.status(405).json({ error: 'Method not allowed' });
+interface ViewApplicationModalProps {
+  applicationId: string;
+  open: boolean;
+  onClose: () => void;
 }
+
+export default function ViewApplicationModal({ applicationId, open, onClose }: ViewApplicationModalProps) {
+  const { token } = useAuth();
+  const [appData, setAppData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!open || !applicationId) return;
+
+    const fetchApp = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/applications/${applicationId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        setAppData(data);
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to load application');
+        onClose();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApp();
+  }, [open, applicationId]);
+
+  const { application, job } = appData || {};
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{job?.title || 'Application'}</DialogTitle>
+          <DialogDescription>
+            {job?.company} – {job?.location}
+          </DialogDescription>
+        </DialogHeader>
+
+        {loading ? (
+          <p className="text-sm text-muted-foreground px-2">Loading...</p>
+        ) : (
+          <CardContent className="space-y-4 text-sm px-2">
+            <div>
+              <strong>Status:</strong> {application.status}
+            </div>
+
+            {application.coverLetter && (
+              <div>
+                <strong>Cover Letter:</strong>
+                <p className="whitespace-pre-wrap mt-1">{application.coverLetter}</p>
+              </div>
+            )}
+
+            <div>
+              <strong>Resume:</strong>
+              <br />
+              <Button
+                variant="outline"
+                onClick={() => window.open(application.resumeUrl, '_blank')}
+              >
+                View Resume
+              </Button>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="secondary" disabled>Edit</Button>
+              <Button variant="destructive" disabled>Retract</Button>
+            </div>
+          </CardContent>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+export const getServerSideProps = async () => ({ props: {} });

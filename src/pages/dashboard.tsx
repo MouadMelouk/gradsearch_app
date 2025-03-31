@@ -314,3 +314,4 @@ function Dashboard() {
 }
 
 export default withRolePageGuard(Dashboard, ['student', 'employer']);
+export const getServerSideProps = async () => ({ props: {} });

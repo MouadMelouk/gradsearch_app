@@ -5,4 +5,4 @@ export default function AboutPage() {
       </div>
     );
   }
-  
+  export const getServerSideProps = async () => ({ props: {} });
