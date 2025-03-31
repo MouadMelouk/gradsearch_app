@@ -10,34 +10,35 @@ export function withRolePageGuard<T extends object>(
   return function GuardedPage(props: T) {
     const { user, token, isReady } = useAuth();
     const router = useRouter();
-    const [status, setStatus] = useState<'loading' | 'allowed' | 'denied'>('loading');
+    const [status, setStatus] = useState<'loading' | 'allowed' | 'denied' | 'redirecting'>('loading');
 
     useEffect(() => {
       if (!isReady) return;
 
-      // Case 1: not logged in at all
+      // Case 1: Not logged in at all
       if (!user && !token) {
-        setStatus('denied');
+        setStatus('redirecting');
+        router.replace('/login');
         return;
       }
 
-      // Case 2: user exists and role is allowed
+      // Case 2: User exists and has allowed role
       if (user && allowedRoles.includes(user.role)) {
         setStatus('allowed');
         return;
       }
 
-      // Case 3: user exists but wrong role
+      // Case 3: User exists but has wrong role
       if (user && !allowedRoles.includes(user.role)) {
         setStatus('denied');
         return;
       }
 
-      // Otherwise still waiting for user to resolve
+      // Still resolving user
       setStatus('loading');
-    }, [user, token, isReady]);
+    }, [user, token, isReady, allowedRoles, router]);
 
-    if (!isReady || status === 'loading') {
+    if (!isReady || status === 'loading' || status === 'redirecting') {
       return <Loader />;
     }
 

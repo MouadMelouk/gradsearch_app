@@ -1,3 +1,4 @@
+// /api/dashboard/employer.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromToken } from '@/lib/auth';
@@ -27,13 +28,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ]);
 
     const jobsWithCounts = jobs.map(job => {
-    const jobId = (job._id as mongoose.Types.ObjectId).toString();
-    const match = applicationCounts.find(a => a._id.toString() === jobId);
-      
-      
+      const jobId = (job._id as mongoose.Types.ObjectId).toString();
+      const match = applicationCounts.find(a => a._id.toString() === jobId);
+
       return {
-        ...job,
+        _id: job._id,
+        title: job.title,
+        company: job.company,
+        location: job.location,
         applicantCount: match?.count || 0,
+        createdAt: job.createdAt,
       };
     });
 

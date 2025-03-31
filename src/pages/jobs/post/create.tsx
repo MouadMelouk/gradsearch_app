@@ -64,45 +64,56 @@ function PostJobPage() {
   if (!user || user.role !== 'employer') return null;
 
   return (
-    <main className="max-w-3xl mx-auto p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Post a New Job</CardTitle>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Job Title *</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+    <main className="flex items-center justify-center py-16 px-4">
+      <div className="w-[90vw] sm:w-[60vw] lg:w-[50vw] max-w-3xl">
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle>Post a New Job</CardTitle>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Job Title *</Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+              </div>
+              <div>
+                <Label>Description *</Label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={5}
+                  required
+                />
+              </div>
+              <div>
+                <Label>Company *</Label>
+                <Input value={company} onChange={(e) => setCompany(e.target.value)} required />
+              </div>
+              <div>
+                <Label>Location</Label>
+                <Input 
+                    value={location} 
+                    onChange={(e) => setLocation(e.target.value)} 
+                    placeholder="e.g. Abu Dhabi, UAE"
+                />
+              </div>
+              <div>
+                <Label>Tags (comma separated)</Label>
+                <Input
+                  placeholder="e.g. remote, on-site, hybrid, AI, marketing, internship"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                />
+              </div>
+            </CardContent>
+            <div className="p-4 pt-0">
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? 'Posting...' : 'Post Job'}
+              </Button>
             </div>
-            <div>
-              <Label>Description *</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required />
-            </div>
-            <div>
-              <Label>Company *</Label>
-              <Input value={company} onChange={(e) => setCompany(e.target.value)} required />
-            </div>
-            <div>
-              <Label>Location</Label>
-              <Input value={location} onChange={(e) => setLocation(e.target.value)} />
-            </div>
-            <div>
-              <Label>Tags (comma separated)</Label>
-              <Input
-                placeholder="e.g. remote, frontend, internship"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-              />
-            </div>
-          </CardContent>
-          <div className="p-4">
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Posting...' : 'Post Job'}
-            </Button>
-          </div>
-        </form>
-      </Card>
+          </form>
+        </Card>
+      </div>
     </main>
   );
 }

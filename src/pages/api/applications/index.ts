@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromToken } from '@/lib/auth';
 import Application from '@/models/Application';
 import Job from '@/models/Job';
+import User from '@/models/User';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   await connectToDatabase();
@@ -17,9 +18,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: 'Only students can apply to jobs' });
     }
 
-    const { jobId, coverLetter, resumeUrl } = req.body;
-
-    if (!jobId || !coverLetter || !resumeUrl) {
+    const { jobId, coverLetter } = req.body;
+    if (!jobId || !coverLetter) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -33,10 +33,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(409).json({ error: 'You already applied to this job' });
     }
 
+    const fullUser = await User.findById(user.id).select('resumeUrl');
+    if (!fullUser?.resumeUrl) {
+      return res.status(400).json({ error: 'You must upload a resume before applying' });
+    }
+
     const application = await Application.create({
       userId: user.id,
       jobId,
-      resumeUrl,
+      resumeUrl: fullUser.resumeUrl,
       coverLetter,
       status: 'pending',
     });

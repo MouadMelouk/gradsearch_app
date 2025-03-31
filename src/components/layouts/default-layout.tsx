@@ -10,7 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="border-b bg-background shadow-sm px-4 py-3">
         <nav className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="font-bold text-lg">
-            GradSearch
+            GradSearch Demo
           </Link>
           <div className="space-x-4 text-sm">
             {user?.role === 'employer' && (

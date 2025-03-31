@@ -1,7 +1,6 @@
 'use client';
 
 import { withRolePageGuard } from '@/lib/withRolePageGuard';
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
@@ -40,12 +39,20 @@ function ApplyJobPage() {
   const [loading, setLoading] = useState(true);
   const [cvModalOpen, setCvModalOpen] = useState(false);
 
+  // Fetch the job details if we have both a jobId and a token
   useEffect(() => {
-    if (!jobId) return;
+    if (!jobId || !token) {
+      setLoading(false);
+      return;
+    }
 
     const fetchJob = async () => {
       try {
-        const res = await fetch(`/api/jobs/${jobId}`);
+        const res = await fetch(`/api/jobs/${jobId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error('Could not load job');
         const data = await res.json();
         setJob(data);
@@ -57,8 +64,9 @@ function ApplyJobPage() {
     };
 
     fetchJob();
-  }, [jobId]);
+  }, [jobId, token]);
 
+  // Submit application
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -104,14 +112,41 @@ function ApplyJobPage() {
   }
 
   return (
-    <main className="max-w-2xl mx-auto p-6">
+    <main className="flex items-center justify-center py-10 px-4">
+    <div className="w-[90vw] sm:w-[50vw] max-w-3xl">
       <Card>
         <CardHeader>
-          <CardTitle>Apply for: {job.title}</CardTitle>
-          <CardDescription>{job.company || job.location}</CardDescription>
+          <CardTitle>{job.title}</CardTitle>
+          <CardDescription>
+            {job.company} &mdash; {job.location}
+          </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+        <CardContent className="space-y-4">
+          {/* Job Details */}
+          <div>
+            <Label>Job Description</Label>
+            <p className="text-sm text-gray-700 whitespace-pre-line">
+              {job.description}
+            </p>
+          </div>
+          {job.tags && job.tags.length > 0 && (
+            <div>
+              <Label>Tags</Label>
+              <div className="flex flex-wrap gap-2">
+                {job.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-gray-200 text-gray-800 text-xs font-medium px-2 py-1 rounded"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Application Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="coverLetter">Cover Letter</Label>
               <Textarea
@@ -123,31 +158,40 @@ function ApplyJobPage() {
                 required
               />
             </div>
-
-            <div className="flex flex-col gap-2">
-              <Label>Resume</Label>
-              <div className="flex gap-4">
-                {user.resumeUrl ? (
-                  <Button variant="outline" onClick={() => window.open(user.resumeUrl!, '_blank')}>
-                    View Current
-                  </Button>
-                ) : (
-                  <p className="text-sm text-red-600">You haven’t uploaded a resume yet.</p>
-                )}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Label>Resume</Label>
+                <div className="mt-1">
+                  {user.resumeUrl ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => window.open(user.resumeUrl!, '_blank')}
+                    >
+                      View Current
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-red-600">
+                      You haven’t uploaded a resume yet.
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="sm:pt-5 flex items-start sm:items-end">
                 <Button type="button" onClick={() => setCvModalOpen(true)}>
                   {user.resumeUrl ? 'Replace' : 'Upload'}
                 </Button>
               </div>
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full">
-              Submit Application
-            </Button>
-          </CardFooter>
-        </form>
+            <CardFooter>
+              <Button type="submit" className="w-full">
+                Submit Application
+              </Button>
+            </CardFooter>
+          </form>
+        </CardContent>
       </Card>
-
+      </div>
       {/* Upload CV modal */}
       <UploadCvModal
         open={cvModalOpen}
@@ -156,6 +200,7 @@ function ApplyJobPage() {
           await refreshUser();
         }}
       />
+    
     </main>
   );
 }

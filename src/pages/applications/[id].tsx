@@ -1,75 +1,81 @@
-'use client';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { connectToDatabase } from '@/lib/mongodb';
+import { getUserFromToken } from '@/lib/auth';
+import Application, { IApplication } from '@/models/Application';
+import Job, { IJob } from '@/models/Job';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { withRolePageGuard } from '@/lib/withRolePageGuard';
+type ResponseData = {
+  application: IApplication;
+  job: IJob;
+};
 
-export default withRolePageGuard(ViewApplicationPage, ['student']);
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseData | { message?: string; error?: string }>
+) {
+  await connectToDatabase();
 
-function ViewApplicationPage() {
-  const { token } = useAuth();
-  const router = useRouter();
-  const { id } = useParams(); // application ID
-  const [appData, setAppData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const user = getUserFromToken(req);
+  const { id } = req.query;
 
-  useEffect(() => {
-    const fetchApp = async () => {
-      try {
-        const res = await fetch(`/api/applications/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        setAppData(data);
-      } catch (err: any) {
-        toast.error(err.message || 'Failed to load application');
-        router.push('/dashboard');
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (!id || typeof id !== 'string') {
+    return res.status(400).json({ error: 'Invalid application ID' });
+  }
 
-    fetchApp();
-  }, [id, token]);
+  // Fetch the application
+  const rawApplication = await Application.findById(id);
+  if (!rawApplication) {
+    return res.status(404).json({ error: 'Application not found' });
+  }
 
-  if (loading) return <main className="p-6">Loading...</main>;
-  if (!appData) return null;
+  // Only the owning student can read/update/delete their application
+  if (user.role !== 'student' || rawApplication.userId.toString() !== user.id) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
 
-  const { application, job } = appData;
+  // ================================
+  // GET — Fetch application and job
+  // ================================
+  if (req.method === 'GET') {
+    const rawJob = await Job.findById(rawApplication.jobId).lean();
+    if (!rawJob) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
 
-  return (
-    <main className="max-w-3xl mx-auto p-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{job.title}</CardTitle>
-          <CardDescription>{job.company} – {job.location}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <div>
-            <strong>Status:</strong> {application.status}
-          </div>
+    return res.status(200).json({
+      application: rawApplication.toObject() as IApplication,
+      job: rawJob as IJob,
+    });
+  }
 
-          {application.coverLetter && (
-            <div>
-              <strong>Cover Letter:</strong>
-              <p className="whitespace-pre-wrap mt-1">{application.coverLetter}</p>
-            </div>
-          )}
+  // ================================
+  // PATCH — Update cover letter and/or resume URL
+  // ================================
+  if (req.method === 'PATCH') {
+    const { coverLetter, resumeUrl } = req.body;
 
-          <div>
-            <strong>Resume:</strong>
-            <br />
-            <Button variant="outline" onClick={() => window.open(application.resumeUrl, '_blank')}>
-              View Resume
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </main>
-  );
+    if (!coverLetter && !resumeUrl) {
+      return res.status(400).json({ error: 'Nothing to update' });
+    }
+
+    if (coverLetter) rawApplication.coverLetter = coverLetter;
+    if (resumeUrl) rawApplication.resumeUrl = resumeUrl;
+
+    await rawApplication.save();
+
+    return res.status(200).json({ message: 'Application updated successfully' });
+  }
+
+  // ================================
+  // DELETE — Retract application
+  // ================================
+  if (req.method === 'DELETE') {
+    await rawApplication.deleteOne();
+    return res.status(200).json({ message: 'Application successfully retracted' });
+  }
+
+  // ================================
+  // Unsupported method
+  // ================================
+  return res.status(405).json({ error: 'Method not allowed' });
 }
