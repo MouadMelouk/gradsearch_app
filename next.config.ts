@@ -1,10 +1,9 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  reactStrictMode: true,
+// next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   eslint: {
-    // ONLY FOR DEMO, TODO: clean up properly
     ignoreDuringBuilds: true,
   },
-} ;
+};
+
+module.exports = nextConfig;
