@@ -64,7 +64,7 @@ const HomePage = () => {
       </CardContent>
     </Card>
   </div>
-
+ 
   <div className="mx-auto w-full sm:w-1/2">
     <Card>
       <CardHeader>
